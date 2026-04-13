@@ -22,6 +22,12 @@ if (isset($_POST['simpan_kendaraan'])) {
     $id_user = $_SESSION['id_user'];
     $waktu_masuk = date('Y-m-d H:i:s');
 
+    // === TAMBAHAN: Cari id_tarif berdasarkan jenis_kendaraan ===
+    $q_tarif = mysqli_query($conn, "SELECT id_tarif FROM tb_ukk_galih_tarif WHERE jenis_kendaraan = '$jenis_kendaraan'");
+    $d_tarif = mysqli_fetch_assoc($q_tarif);
+    $id_tarif = $d_tarif ? $d_tarif['id_tarif'] : 'NULL';
+    // ==========================================================
+
     //1. Cek Kapasitas Area Parkir
     $cek_area = mysqli_query($conn, "SELECT * FROM tb_ukk_galih_area_parkir WHERE id_area = '$id_area'");
     $data_area = mysqli_fetch_assoc($cek_area);
@@ -38,9 +44,10 @@ if (isset($_POST['simpan_kendaraan'])) {
         if (mysqli_query($conn, $query_kendaraan)) {
             $id_kendaraan = mysqli_insert_id($conn);
 
-            // 3. Simpan ke tabel transaksi
-            $query_transaksi = "INSERT INTO tb_ukk_galih_transaksi (id_kendaraan, waktu_masuk, status, id_user, id_area) 
-                                VALUES ('$id_kendaraan', '$waktu_masuk', 'masuk', '$id_user', '$id_area')";
+            // 3. Simpan ke tabel transaksi (TERMASUK id_tarif)
+            $val_id_tarif = ($id_tarif !== 'NULL') ? "'$id_tarif'" : "NULL";
+            $query_transaksi = "INSERT INTO tb_ukk_galih_transaksi (id_kendaraan, waktu_masuk, status, id_user, id_area, id_tarif) 
+                                VALUES ('$id_kendaraan', '$waktu_masuk', 'masuk', '$id_user', '$id_area', $val_id_tarif)";
 
             if (mysqli_query($conn, $query_transaksi)) {
                 // 4. Update jumlah terisi ke tabel area_parkir (+1)
